@@ -1,0 +1,6 @@
+{
+  "name": "GAVIN | ระบบติดตามสถานะสินเชื่อ Centro พระราม 2 – พุทธบูชา 2",
+  "description": "แพลตฟอร์มตรวจสอบสถานะสินเชื่อธนาคารสำหรับลูกค้า GAVIN โครงการ Centro พระราม 2 – พุทธบูชา 2 พร้อมระบบยืนยันตัวตนหลายชั้นและการแจ้งเตือนผ่าน LINE",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,230 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Default-Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Global Primitives & Identity Helpers
+    // -------------------------------------------------------------------------
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidHexHash(hash) {
+      return hash is string && hash.size() == 64 && hash.matches('^[a-f0-9]{64}$');
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isPrimaryAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'kritin.prom@gmail.com';
+    }
+
+    function isAdmin() {
+      return isPrimaryAdmin() || (
+        isVerifiedUser() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Validation Blueprints (Anti-Update-Gap)
+    // -------------------------------------------------------------------------
+    function isValidUnit(data) {
+      return data.keys().hasAll([
+          'unitNo', 'houseType', 'houseNumber', 'landAreaSqWah',
+          'usableAreaSqM', 'basePrice', 'bookingStatus', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'unitNo', 'houseType', 'houseNumber', 'landAreaSqWah',
+          'usableAreaSqM', 'basePrice', 'bookingStatus', 'updatedAt'
+        ])
+        && data.unitNo is string && data.unitNo.size() >= 1 && data.unitNo.size() <= 16 && data.unitNo.matches('^[A-Z0-9]+$')
+        && data.houseType is string && data.houseType in ['ZOTICUS', 'LUKE', 'INIZIO', 'ABLE', 'PHOENIX', 'ETHAN', 'ZERA']
+        && data.houseNumber is string && data.houseNumber.size() >= 1 && data.houseNumber.size() <= 20
+        && data.landAreaSqWah is number && data.landAreaSqWah > 0 && data.landAreaSqWah <= 500
+        && data.usableAreaSqM is number && data.usableAreaSqM > 0 && data.usableAreaSqM <= 1000
+        && data.basePrice is number && data.basePrice >= 0 && data.basePrice <= 500000000
+        && data.bookingStatus is string && data.bookingStatus in ['available', 'reserved', 'loan_in_progress', 'transferred']
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidLoanApplication(data) {
+      return data.keys().hasAll([
+          'appId', 'customerName', 'nationalId', 'phone',
+          'unitId', 'unitNo', 'houseType', 'houseNumber', 'landAreaSqWah', 'usableAreaSqM',
+          'contractPrice', 'bookingDeposit', 'loanAmount', 'approvedAmount',
+          'bankName', 'interestRateNote', 'overallStatus', 'advisorName', 'advisorPhone',
+          'remark', 'timeline', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'appId', 'customerName', 'nationalId', 'phone',
+          'unitId', 'unitNo', 'houseType', 'houseNumber', 'landAreaSqWah', 'usableAreaSqM',
+          'contractPrice', 'bookingDeposit', 'loanAmount', 'approvedAmount',
+          'bankName', 'bankSubmissions', 'interestRateNote', 'overallStatus', 'advisorName', 'advisorPhone',
+          'remark', 'timeline', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.appId) && data.appId.size() <= 64
+        && data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 120
+        && data.nationalId is string && data.nationalId.size() == 13 && data.nationalId.matches('^[0-9]{13}$')
+        && data.phone is string && data.phone.size() == 10 && data.phone.matches('^0[0-9]{9}$')
+        && isValidId(data.unitId) && data.unitId.size() <= 32
+        && data.unitNo is string && data.unitNo.size() >= 1 && data.unitNo.size() <= 16
+        && data.houseType is string && data.houseType.size() >= 1 && data.houseType.size() <= 32
+        && data.houseNumber is string && data.houseNumber.size() >= 1 && data.houseNumber.size() <= 20
+        && data.landAreaSqWah is number && data.landAreaSqWah > 0 && data.landAreaSqWah <= 500
+        && data.usableAreaSqM is number && data.usableAreaSqM > 0 && data.usableAreaSqM <= 1000
+        && data.contractPrice is number && data.contractPrice >= 0 && data.contractPrice <= 500000000
+        && data.bookingDeposit is number && data.bookingDeposit >= 0 && data.bookingDeposit <= 500000000
+        && data.loanAmount is number && data.loanAmount >= 0 && data.loanAmount <= 500000000
+        && data.approvedAmount is number && data.approvedAmount >= 0 && data.approvedAmount <= 500000000
+        && data.bankName is string && data.bankName.size() >= 1 && data.bankName.size() <= 240
+        && (!('bankSubmissions' in data) || (data.bankSubmissions is list && data.bankSubmissions.size() <= 10 && (data.bankSubmissions.size() == 0 || data.bankSubmissions[0] is map)))
+        && data.interestRateNote is string && data.interestRateNote.size() <= 160
+        && data.overallStatus is string && data.overallStatus in [
+          'submitted', 'doc_review', 'pre_approved', 'appraisal',
+          'bank_approved', 'transfer_scheduled', 'need_docs', 'rejected'
+        ]
+        && data.advisorName is string && data.advisorName.size() <= 100
+        && data.advisorPhone is string && data.advisorPhone.size() <= 20
+        && data.remark is string && data.remark.size() <= 500
+        && data.timeline is list && data.timeline.size() <= 20
+        && (data.timeline.size() == 0 || data.timeline[0] is map)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidLoanLookup(data) {
+      return data.keys().hasAll([
+          'appId', 'customerName', 'maskedPhone', 'maskedNationalId',
+          'unitNo', 'houseType', 'houseNumber', 'landAreaSqWah', 'usableAreaSqM',
+          'contractPrice', 'bookingDeposit', 'loanAmount', 'approvedAmount',
+          'bankName', 'interestRateNote', 'overallStatus', 'advisorName', 'advisorPhone',
+          'remark', 'timeline', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'appId', 'customerName', 'maskedPhone', 'maskedNationalId',
+          'unitNo', 'houseType', 'houseNumber', 'landAreaSqWah', 'usableAreaSqM',
+          'contractPrice', 'bookingDeposit', 'loanAmount', 'approvedAmount',
+          'bankName', 'bankSubmissions', 'interestRateNote', 'overallStatus', 'advisorName', 'advisorPhone',
+          'remark', 'timeline', 'updatedAt'
+        ])
+        && isValidId(data.appId) && data.appId.size() <= 64
+        && data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 120
+        && data.maskedPhone is string && data.maskedPhone.size() <= 24
+        && data.maskedNationalId is string && data.maskedNationalId.size() <= 32
+        && data.unitNo is string && data.unitNo.size() >= 1 && data.unitNo.size() <= 16
+        && data.houseType is string && data.houseType.size() >= 1 && data.houseType.size() <= 32
+        && data.houseNumber is string && data.houseNumber.size() >= 1 && data.houseNumber.size() <= 20
+        && data.landAreaSqWah is number && data.landAreaSqWah > 0 && data.landAreaSqWah <= 500
+        && data.usableAreaSqM is number && data.usableAreaSqM > 0 && data.usableAreaSqM <= 1000
+        && data.contractPrice is number && data.contractPrice >= 0 && data.contractPrice <= 500000000
+        && data.bookingDeposit is number && data.bookingDeposit >= 0 && data.bookingDeposit <= 500000000
+        && data.loanAmount is number && data.loanAmount >= 0 && data.loanAmount <= 500000000
+        && data.approvedAmount is number && data.approvedAmount >= 0 && data.approvedAmount <= 500000000
+        && data.bankName is string && data.bankName.size() >= 1 && data.bankName.size() <= 240
+        && (!('bankSubmissions' in data) || (data.bankSubmissions is list && data.bankSubmissions.size() <= 10 && (data.bankSubmissions.size() == 0 || data.bankSubmissions[0] is map)))
+        && data.interestRateNote is string && data.interestRateNote.size() <= 160
+        && data.overallStatus is string && data.overallStatus in [
+          'submitted', 'doc_review', 'pre_approved', 'appraisal',
+          'bank_approved', 'transfer_scheduled', 'need_docs', 'rejected'
+        ]
+        && data.advisorName is string && data.advisorName.size() <= 100
+        && data.advisorPhone is string && data.advisorPhone.size() <= 20
+        && data.remark is string && data.remark.size() <= 500
+        && data.timeline is list && data.timeline.size() <= 20
+        && (data.timeline.size() == 0 || data.timeline[0] is map)
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAdminUser(data) {
+      return data.keys().hasAll(['email', 'name', 'role', 'createdAt'])
+        && data.keys().hasOnly(['email', 'name', 'role', 'createdAt'])
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 160
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 120
+        && data.role is string && data.role in ['officer', 'admin']
+        && data.createdAt is timestamp;
+    }
+
+    // -------------------------------------------------------------------------
+    // Collection Rules
+    // -------------------------------------------------------------------------
+
+    // Startup connectivity probe
+    match /test/{docId} {
+      allow get: if docId == 'connection';
+      allow list, write: if false;
+    }
+
+    // Residence inventory & pricing (strictly restricted to Admin; customers see only their own unit after entering phone/NID)
+    match /units/{unitId} {
+      allow get: if isAdmin() && isValidId(unitId);
+      allow list: if isAdmin();
+      allow create: if isAdmin() && isValidId(unitId) && isValidUnit(incoming())
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(unitId) && isValidUnit(incoming())
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'basePrice', 'bookingStatus', 'houseNumber', 'houseType',
+          'landAreaSqWah', 'usableAreaSqM', 'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(unitId);
+    }
+
+    // Officer-managed customer mortgage applications
+    match /loanApplications/{appId} {
+      allow get: if isAdmin() && isValidId(appId);
+      allow list: if isAdmin();
+      allow create: if isAdmin() && isValidId(appId) && isValidLoanApplication(incoming())
+        && exists(/databases/$(database)/documents/units/$(incoming().unitId))
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(appId) && isValidLoanApplication(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time;
+      allow delete: if isAdmin() && isValidId(appId);
+    }
+
+    // Real-time SHA-256 lookup index (no list; direct get by exact phone or national ID hash)
+    match /loanLookups/{lookupHash} {
+      allow get: if isValidHexHash(lookupHash);
+      allow list: if false;
+      allow create, update: if isAdmin() && isValidHexHash(lookupHash)
+        && isValidLoanLookup(incoming())
+        && incoming().updatedAt == request.time;
+      allow delete: if isAdmin() && isValidHexHash(lookupHash);
+    }
+
+    // Admin/Officer role registry
+    match /admins/{uid} {
+      allow get: if isValidId(uid) && (
+        isPrimaryAdmin() ||
+        (isVerifiedUser() && request.auth.uid == uid)
+      );
+      allow list: if isPrimaryAdmin();
+      allow create: if isPrimaryAdmin() && isValidId(uid) && isValidAdminUser(incoming())
+        && incoming().createdAt == request.time;
+      allow update: if isPrimaryAdmin() && isValidId(uid) && isValidAdminUser(incoming())
+        && incoming().createdAt == existing().createdAt;
+      allow delete: if isPrimaryAdmin() && isValidId(uid);
+    }
+  }
+}

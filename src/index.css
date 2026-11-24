@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-display: "Cormorant Garamond", "Noto Sans Thai", serif;
+    --font-sans: "Plus Jakarta Sans", "Noto Sans Thai", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #F6F4EF;
+    color: #14171A;
+  }
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono-tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes eq-bar {
+  0%, 100% {
+    transform: scaleY(0.32);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.animate-eq-1 {
+  animation: eq-bar 0.95s ease-in-out infinite;
+  transform-origin: bottom;
+}
+.animate-eq-2 {
+  animation: eq-bar 0.7s ease-in-out 0.18s infinite;
+  transform-origin: bottom;
+}
+.animate-eq-3 {
+  animation: eq-bar 1.1s ease-in-out 0.34s infinite;
+  transform-origin: bottom;
+}

@@ -1,0 +1,356 @@
+{
+  "entities": {
+    "Unit": {
+      "title": "Centro Residence Unit",
+      "description": "Property unit inventory for Centro Rama 2 - Phutthabucha 2 from official project sheet.",
+      "type": "object",
+      "properties": {
+        "unitNo": {
+          "type": "string",
+          "description": "Unit number (e.g. A01, B02, N15)",
+          "maxLength": 16,
+          "pattern": "^[A-Z0-9]+$"
+        },
+        "houseType": {
+          "type": "string",
+          "description": "Architectural house model name",
+          "enum": ["ZOTICUS", "LUKE", "INIZIO", "ABLE", "PHOENIX", "ETHAN", "ZERA"]
+        },
+        "houseNumber": {
+          "type": "string",
+          "description": "Official house address number (e.g. 9/1)",
+          "maxLength": 20
+        },
+        "landAreaSqWah": {
+          "type": "number",
+          "description": "Land plot area in square wah"
+        },
+        "usableAreaSqM": {
+          "type": "number",
+          "description": "Usable interior area in square meters"
+        },
+        "basePrice": {
+          "type": "number",
+          "description": "Unit selling price in THB"
+        },
+        "bookingStatus": {
+          "type": "string",
+          "enum": ["available", "reserved", "loan_in_progress", "transferred"]
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "unitNo",
+        "houseType",
+        "houseNumber",
+        "landAreaSqWah",
+        "usableAreaSqM",
+        "basePrice",
+        "bookingStatus",
+        "updatedAt"
+      ]
+    },
+    "LoanApplication": {
+      "title": "Customer Mortgage Application",
+      "description": "Customer reservation and multi-bank mortgage tracking record managed by GAVIN officers.",
+      "type": "object",
+      "properties": {
+        "appId": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "customerName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "nationalId": {
+          "type": "string",
+          "minLength": 13,
+          "maxLength": 13,
+          "pattern": "^[0-9]{13}$"
+        },
+        "phone": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^0[0-9]{9}$"
+        },
+        "unitId": {
+          "type": "string",
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "unitNo": {
+          "type": "string",
+          "maxLength": 16
+        },
+        "houseType": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "houseNumber": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "landAreaSqWah": {
+          "type": "number"
+        },
+        "usableAreaSqM": {
+          "type": "number"
+        },
+        "contractPrice": {
+          "type": "number"
+        },
+        "bookingDeposit": {
+          "type": "number"
+        },
+        "loanAmount": {
+          "type": "number"
+        },
+        "approvedAmount": {
+          "type": "number"
+        },
+        "bankName": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "bankSubmissions": {
+          "type": "array",
+          "description": "List of bank loan submissions (max 10 banks)"
+        },
+        "interestRateNote": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "overallStatus": {
+          "type": "string",
+          "enum": [
+            "submitted",
+            "doc_review",
+            "pre_approved",
+            "appraisal",
+            "bank_approved",
+            "transfer_scheduled",
+            "need_docs",
+            "rejected"
+          ]
+        },
+        "advisorName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "advisorPhone": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "remark": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "timeline": {
+          "type": "array",
+          "description": "Bounded milestone history (max 20 items)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "appId",
+        "customerName",
+        "nationalId",
+        "phone",
+        "unitId",
+        "unitNo",
+        "houseType",
+        "houseNumber",
+        "landAreaSqWah",
+        "usableAreaSqM",
+        "contractPrice",
+        "bookingDeposit",
+        "loanAmount",
+        "approvedAmount",
+        "bankName",
+        "interestRateNote",
+        "overallStatus",
+        "advisorName",
+        "advisorPhone",
+        "remark",
+        "timeline",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LoanLookup": {
+      "title": "Real-Time Customer Lookup Index",
+      "description": "SHA-256 keyed lookup record (no listing allowed) enabling instant real-time status lookup by phone or national ID.",
+      "type": "object",
+      "properties": {
+        "appId": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "customerName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "maskedPhone": {
+          "type": "string",
+          "maxLength": 24
+        },
+        "maskedNationalId": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "unitNo": {
+          "type": "string",
+          "maxLength": 16
+        },
+        "houseType": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "houseNumber": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "landAreaSqWah": {
+          "type": "number"
+        },
+        "usableAreaSqM": {
+          "type": "number"
+        },
+        "contractPrice": {
+          "type": "number"
+        },
+        "bookingDeposit": {
+          "type": "number"
+        },
+        "loanAmount": {
+          "type": "number"
+        },
+        "approvedAmount": {
+          "type": "number"
+        },
+        "bankName": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "bankSubmissions": {
+          "type": "array"
+        },
+        "interestRateNote": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "overallStatus": {
+          "type": "string",
+          "enum": [
+            "submitted",
+            "doc_review",
+            "pre_approved",
+            "appraisal",
+            "bank_approved",
+            "transfer_scheduled",
+            "need_docs",
+            "rejected"
+          ]
+        },
+        "advisorName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "advisorPhone": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "remark": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "timeline": {
+          "type": "array"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "appId",
+        "customerName",
+        "maskedPhone",
+        "maskedNationalId",
+        "unitNo",
+        "houseType",
+        "houseNumber",
+        "landAreaSqWah",
+        "usableAreaSqM",
+        "contractPrice",
+        "bookingDeposit",
+        "loanAmount",
+        "approvedAmount",
+        "bankName",
+        "interestRateNote",
+        "overallStatus",
+        "advisorName",
+        "advisorPhone",
+        "remark",
+        "timeline",
+        "updatedAt"
+      ]
+    },
+    "AdminUser": {
+      "title": "Authorized GAVIN Officer",
+      "description": "Registered officer allowed to manage unit pricing and loan statuses.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "role": {
+          "type": "string",
+          "enum": ["officer", "admin"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["email", "name", "role", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/units/{unitId}": {
+      "schema": { "$ref": "#/entities/Unit" },
+      "description": "Catalog of 74 Centro Rama 2 - Phutthabucha 2 residences with pricing and status."
+    },
+    "/loanApplications/{appId}": {
+      "schema": { "$ref": "#/entities/LoanApplication" },
+      "description": "Mortgage tracking records accessible to admins."
+    },
+    "/loanLookups/{lookupHash}": {
+      "schema": { "$ref": "#/entities/LoanLookup" },
+      "description": "SHA-256 keyed lookup documents enabling direct real-time status lookup by phone or national ID."
+    },
+    "/admins/{uid}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Officer access control records."
+    }
+  }
+}
